@@ -1,0 +1,15 @@
+numpy
+onnxruntime
+Pillow
+
+[:sys_platform == "linux"]
+opencv-python-headless
+
+[:sys_platform == "win32" or sys_platform == "darwin"]
+opencv-python
+
+[api]
+fastapi>=0.68.0
+uvicorn>=0.15.0
+python-multipart>=0.0.5
+pydantic<3,>=1.8.0
