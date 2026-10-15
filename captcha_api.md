@@ -21,23 +21,29 @@ cd /Users/sell/code/ddddocr
 .venv/bin/python captcha_api.py
 ```
 
-看到 `Uvicorn running on http://127.0.0.1:8080` 后即可调用。服务只监听本机 `127.0.0.1:8080`。第一次启动会加载模型，稍等几秒再请求。
+看到 `Uvicorn running on http://0.0.0.0:8521` 后即可调用。服务监听 `0.0.0.0:8521`，本机用 `127.0.0.1:8521`，Docker 里的 PHP 用 `host.docker.internal:8521`。第一次启动会加载模型，稍等几秒再请求。
 
 停止服务：在运行该命令的终端按 `Ctrl+C`。
 
 ## 调用
 
 ```
-GET /captcha?url=<验证码图片地址>
+GET /captcha?url=<验证码图片地址>&cookie=<可选，会话 Cookie>
+POST /captcha
 ```
 
-`url` 必填，且必须是 `http` 或 `https` 地址。地址里如果含有 `?`、`&`、`=`，先做 URL 编码再放进参数。
+`GET` 的 `url` 必填，且必须是 `http` 或 `https` 地址。地址里如果含有 `?`、`&`、`=`，先做 URL 编码再放进参数。Lightlayer 的验证码跟登录会话绑定，只传图片地址会识别到另一张图；要么带上同一次登录的 `cookie`，要么用 `POST` 直接提交已经下载好的图片二进制。
 
 示例：
 
 ```bash
-curl -G "http://127.0.0.1:8080/captcha" \
-  --data-urlencode "url=https://account.lightlayer.net/?cmd=root&action=captcha"
+curl -G "http://127.0.0.1:8521/captcha" \
+  --data-urlencode "url=https://account.lightlayer.net/index.php?cmd=root&action=captcha" \
+  --data-urlencode "cookie=SESSID4ba1=..."
+
+curl -X POST "http://127.0.0.1:8521/captcha" \
+  -H "Content-Type: application/octet-stream" \
+  --data-binary @captcha.jpg
 ```
 
 成功时返回：
@@ -51,6 +57,6 @@ curl -G "http://127.0.0.1:8080/captcha" \
 | 状态码 | 含义 |
 |---|---|
 | 200 | 识别成功，`captcha` 为识别出的字符串 |
-| 400 | `url` 不是 http 或 https 地址 |
+| 400 | `url` 不是 http 或 https 地址，或 POST 的图片为空 |
 | 422 | 没有传 `url` |
 | 502 | 图片下载失败，或图片无法识别 |
